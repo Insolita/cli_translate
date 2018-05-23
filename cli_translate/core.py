@@ -4,37 +4,46 @@
  Translator,py
  :author insolita
  :url https://github.com/insolita/cli_translate
- :description Main purpose of package it is a quick translation text in clipboard, and also ability to store translations for future analyze, create member cards and other...
+ :description Main purpose of package it is a quick translation text in clipboard,
+  and also ability to store translations for future analyze, create memory cards
 '''
 import sys
 import argparse
 import pyperclip
 import os
-import re
 import requests
 import sqlite3
-import json
 from contextlib import closing
 from pyquery import pyquery
 from datetime import datetime
-from pprint import pprint
 
 GOOGLE_URL = 'http://translate.google.com/m'
 YANDEX_URL = 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=%s&lang=%s'
+
+CLIENT_BRANDS = {
+    'google': {
+        'header': 'Translated by (Google Translate)',
+        'footer': '==== https://translate.google.com  ===='
+        },
+    # Api usage requirements
+    'yandex': {
+        'header': 'Translated by (Яндекс.Переводчик)',
+        'footer': '==== http://translate.yandex.ru ===='
+    }
+}
 
 
 class TranslateStorage(object):
     def __init__(self, db_path):
         self.db_path = os.path.expanduser(db_path)
         self.table_name = 'translations'
-        self.db = ':memory:'
-        self._init_db_path()
+        self.db = self._init_db_path()
         self._init_migrations()
 
     def _init_db_path(self):
         if not os.path.exists(self.db_path):
             os.makedirs(self.db_path)
-        self.db = os.path.join(self.db_path, self.table_name + '.db')
+        return os.path.join(self.db_path, self.table_name + '.db')
 
     def _query(self, sql, params=(), fetchall=False):
         with closing(sqlite3.connect(self.db, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)) as connect:
@@ -124,7 +133,9 @@ def client_factory(client, api_key=None):
         if api_key is None:
             api_key = os.environ.get('YANDEX_TRANSLATE_API_KEY', default=None)
             if api_key is None:
-                print('Environment variable YANDEX_TRANSLATE_API_KEY required; go to https://translate.yandex.ru/developers/keys, register free api key, and add it in environment')
+                print('''Environment variable YANDEX_TRANSLATE_API_KEY required;
+                         go to https://translate.yandex.ru/developers/keys,
+                         register free api key, and add it in environment''')
                 return None
         return YandexTranslate(api_key)
     else:
@@ -145,19 +156,20 @@ def _resolve_text(args):
 
 
 def _show_result(result, client, is_raw, is_notify, source=None):
+    header = CLIENT_BRANDS[client]['header']
     if is_raw:
         message = result
     else:
         message = [] if source is None else [source]
-        message.append('====== Translated by "%s" =====' % (
-            'Google Translate' if client == 'google' else 'Яндекс.Переводчик'))
+        if not is_notify:
+            message.append('\u001b[1m\u001b[32m%s\u001b[0m\u001b[0m' % header)
         message.append(result)
-        message.append('====== %s =====' %
-                       'http://translate.yandex.ru/' if client == 'yandex' else '')
+        message.append(CLIENT_BRANDS[client]['footer'])
         message = '\n%s\n' % '\n'.join(message)
     if is_notify:
         import subprocess
-        subprocess.Popen(['notify-send', 'Translation', message])
+        subprocess.Popen(
+            ['notify-send', '--app-name=Cli Translator', '--urgency=low', header, message])
     else:
         print(message)
 
@@ -171,7 +183,14 @@ def _clean_db(db):
 def _db_usage(db):
     storage = TranslateStorage(db)
     stat = storage.stat()
-    pprint(stat)
+    def list_format(key, lst):
+        return lst if key=='total' else '\n'.join([' \u001b[1m%s:\u001b[0m %s' % x for x in lst])
+    stat = dict([(k, list_format(k, v)) for (k,v) in stat.items()])
+    view = '\u001b[33m By Clients:\u001b[0m\n{clients}\n'\
+           '\u001b[33m By Source Lang:\u001b[0m\n{from_lang}\n'\
+           '\u001b[33m By Target Lang:\u001b[0m\n{to_lang}\n'\
+           '\u001b[31m Total:\u001b[0m{total}\n'
+    print(view.format(**stat))
     exit(0)
 
 
@@ -181,7 +200,7 @@ def translate(args):
     translation_client = client_factory(client, args.yandex_key)
     result = translation_client.translate(text.encode(
         'UTF-8'), target_language=args.to, source_language=args.source)
-    if args.nosave == False:
+    if args.nosave == False and args.db:
         storage = TranslateStorage(args.db)
         storage.save(client, text, result, args.source, args.to)
     _show_result(result, client, args.raw, args.notify,
@@ -191,8 +210,20 @@ def translate(args):
     exit(0)
 
 
+def _ensure_clip_support(clipboard):
+
+    if not pyperclip.is_available():
+        pyperclip.set_clipboard(clipboard)
+        if not pyperclip.is_available():
+            print("Copy functionality unavailable!")
+            print('''On Linux, install xclip or xsel or klipper via package manager. For example, in Debian:
+                 sudo apt-get install xclip
+                 sudo apt-get install xsel
+                 ''')
+            exit(1)
+
+
 def main():
-    pyperclip.set_clipboard('xclip')
 
     parser = argparse.ArgumentParser()
     parser.add_argument("text", type=str, nargs='?',
@@ -210,7 +241,7 @@ def main():
     parser.add_argument("-c", "--client", type=str, action="store",
                         default='google', help="Translation client (google|yandex)")
     parser.add_argument("-k", "--yandex_key", type=str, action="store",
-                        default=None, help="API key for Яндекс.Переводчик")
+                        default=None, help="API key for Yandex.Translate")
     parser.add_argument("--db", type=str, action="store",
                         default="~/.db/", help='Path to directory where translation database will be stored')
     parser.add_argument("--nosave", action="store_true",
@@ -224,7 +255,11 @@ def main():
 
     parser.add_argument("-p", '--clip', action="store_true",
                         help="Put translation into clipboard")
+    parser.add_argument("-x", '--clipboard', action="store", default="xclip",
+                        help="Clipboard utility")                    
     args = parser.parse_args()
+
+    _ensure_clip_support(args.clipboard)
 
     if args.cleandb:
         _clean_db(args.db)

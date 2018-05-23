@@ -35,7 +35,7 @@ The usage yandex translator require following steps
 
   - `itranslate -to en -i` Interactive text input mode
 
-  -  `itranslate -to en -p` Clipboard text will be translated and replaced with translation
+  - `itranslate -to en -p` Clipboard text will be translated and replaced with translation
 
   - `itranslate --help`  See All available options
 
