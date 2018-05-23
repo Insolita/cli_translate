@@ -29,16 +29,21 @@ The usage yandex translator require following steps
 
  ### Usage Examples
 
- `itranslate -to es` // Clipboard text will be translated
- `itranslate -to fr "Some text"` // "Some text" will be translated
- `itranslate -to en -i` //Interactive text input mode
- `itranslate -to en -p` //Clipboard text will be translated and replaced with translation
- `itranslate --help`  //See All available options
+  - `itranslate -to es`  Clipboard text will be translated
+
+  - `itranslate -to fr "Some text"`  "Some text" will be translated
+
+  - `itranslate -to en -i` Interactive text input mode
+
+  -  `itranslate -to en -p` Clipboard text will be translated and replaced with translation
+
+  - `itranslate --help`  See All available options
+
 
  ### Tips and Tricks
   - register bash/zsh aliases with most useful options; example `alias et="itranslate -to en -p -o -c yandex"
 
-  - save translation to file `itranslate [options]` > file.txt
+  - save translation to file `itranslate [options] > file.txt`
 
   - translate text from file `itranslate [options] "$(cat /path/to_file.txt)"`
 
