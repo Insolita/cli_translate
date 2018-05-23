@@ -3,7 +3,7 @@ Console Translator
 
 ### Installation
 
-`pip3 install cli_translate`
+`pip3 install cli_translate --user`
 
 
 ### Features
