@@ -54,3 +54,11 @@ The usage yandex translator require following steps
 This utility is for personal use, not automated translations. 
 
 The volume of translated text lenght  is limited per-request
+
+### Screens
+
+![Screen1](./img/cli1.png)
+
+![Screen2](./img/cli2.png)
+
+![Screen3](./img/cli3.png)
