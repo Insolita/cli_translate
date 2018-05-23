@@ -3,7 +3,7 @@
 '''
  Translator,py
  :author insolita
- :url https://github.com/insolita/clipboard_translator
+ :url https://github.com/insolita/cli_translate
  :description Main purpose of package it is a quick translation text in clipboard, and also ability to store translations for future analyze, create member cards and other...
 '''
 import sys
@@ -88,7 +88,6 @@ class TranslateStorage(object):
 
 class GoogleTranslate(object):
     def __init__(self):
-        #self.user_agent = 'AndroidTranslate/5.3.0.RC02.130475354-53000263 5.1 phone TRANSLATE_OPM5_TEST_1'
         self.user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0'
 
     def translate(self, text, target_language='ru', source_language='auto'):
@@ -97,7 +96,8 @@ class GoogleTranslate(object):
                   'sl': source_language, 'ie': 'UTF-8', 'prev': '_m'}
         response = requests.get(GOOGLE_URL, params=params, headers=headers)
         if response.status_code != requests.codes.ok:
-            response.raise_for_status()
+            print(response.reason)
+            exit(1)
         pq = pyquery.PyQuery(response.text)
         translated = pq.find('div.t0').text()
         return translated
@@ -113,7 +113,8 @@ class YandexTranslate(object):
         response = requests.post(YANDEX_URL % (self.api_key, lang), data={
                                  'text': text}, headers={'Content-Type': 'application/x-www-form-urlencoded'})
         if response.status_code != requests.codes.ok:
-            response.raise_for_status()
+            print(response.reason)
+            exit(1)
         translated = response.json()
         return translated['text'][0]
 
@@ -135,7 +136,7 @@ def _resolve_text(args):
     if not text:
         text = pyperclip.paste()
     if not text or args.interactive:
-        print('Введите текст для перевода и нажмите Ctrl+D:\n')
+        print('Type text for translation, then press "Ctrl+D" :"\n')
         text = sys.stdin.read()
         text = text.strip()
         if not text or text in ['quit', 'exit', 'xxx', '000']:
@@ -196,7 +197,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("text", type=str, nargs='?',
                         action="store", default=None, help="Text for translation")
-    parser.add_argument("-to", type=str, default='ru',
+    parser.add_argument("-to", "--to", type=str, default='ru',
                         help="Target language (Default ru) (ru|en|es|fr..etc)")
     parser.add_argument("-src", "--source", type=str, default='auto',
                         help="Source language (Default  auto)")
@@ -217,7 +218,7 @@ def main():
     parser.add_argument("--cleandb", action="store_true",
                         help="Clean up translation database")
     parser.add_argument("--dbstat", action="store_true",
-                        help="Статистика базы")
+                        help="Database statistic")
     parser.add_argument("-n", "--notify", action="store_true",
                         help="Output translation result as system notification  (notify-send)")
 
@@ -231,6 +232,7 @@ def main():
         _db_usage(args.db)
     else:
         translate(args)
+
 
 if __name__ == '__main__':
     main()
