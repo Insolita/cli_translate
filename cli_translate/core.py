@@ -7,15 +7,15 @@
  :description Main purpose of package it is a quick translation text in clipboard,
   and also ability to store translations for future analyze, create memory cards
 '''
-import sys
 import argparse
-import pyperclip
 import os
+import pyperclip
 import requests
 import sqlite3
+import sys
 from contextlib import closing
-from pyquery import pyquery
 from datetime import datetime
+from pyquery import pyquery
 
 GOOGLE_URL = 'http://translate.google.com/m'
 YANDEX_URL = 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=%s&lang=%s'
@@ -24,7 +24,7 @@ CLIENT_BRANDS = {
     'google': {
         'header': 'Translated by (Google Translate)',
         'footer': '==== https://translate.google.com  ===='
-        },
+    },
     # Api usage requirements
     'yandex': {
         'header': 'Translated by (Яндекс.Переводчик)',
@@ -46,7 +46,8 @@ class TranslateStorage(object):
         return os.path.join(self.db_path, self.table_name + '.db')
 
     def _query(self, sql, params=(), fetchall=False):
-        with closing(sqlite3.connect(self.db, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)) as connect:
+        with closing(
+                sqlite3.connect(self.db, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)) as connect:
             with connect:
                 with closing(connect.cursor()) as cursor:
                     cursor.execute(sql, params)
@@ -117,10 +118,10 @@ class YandexTranslate(object):
         self.api_key = api_key
 
     def translate(self, text, target_language='ru', source_language='auto'):
-        lang = source_language+'-' + \
-            target_language if source_language != 'auto' else target_language
+        lang = source_language + '-' + \
+               target_language if source_language != 'auto' else target_language
         response = requests.post(YANDEX_URL % (self.api_key, lang), data={
-                                 'text': text}, headers={'Content-Type': 'application/x-www-form-urlencoded'})
+            'text': text}, headers={'Content-Type': 'application/x-www-form-urlencoded'})
         if response.status_code != requests.codes.ok:
             print(response.reason)
             exit(1)
@@ -183,12 +184,14 @@ def _clean_db(db):
 def _db_usage(db):
     storage = TranslateStorage(db)
     stat = storage.stat()
+
     def list_format(key, lst):
-        return lst if key=='total' else '\n'.join([' \u001b[1m%s:\u001b[0m %s' % x for x in lst])
-    stat = dict([(k, list_format(k, v)) for (k,v) in stat.items()])
-    view = '\u001b[33m By Clients:\u001b[0m\n{clients}\n'\
-           '\u001b[33m By Source Lang:\u001b[0m\n{from_lang}\n'\
-           '\u001b[33m By Target Lang:\u001b[0m\n{to_lang}\n'\
+        return lst if key == 'total' else '\n'.join([' \u001b[1m%s:\u001b[0m %s' % x for x in lst])
+
+    stat = dict([(k, list_format(k, v)) for (k, v) in stat.items()])
+    view = '\u001b[33m By Clients:\u001b[0m\n{clients}\n' \
+           '\u001b[33m By Source Lang:\u001b[0m\n{from_lang}\n' \
+           '\u001b[33m By Target Lang:\u001b[0m\n{to_lang}\n' \
            '\u001b[31m Total:\u001b[0m{total}\n'
     print(view.format(**stat))
     exit(0)
@@ -211,7 +214,6 @@ def translate(args):
 
 
 def _ensure_clip_support(clipboard):
-
     if not pyperclip.is_available():
         pyperclip.set_clipboard(clipboard)
         if not pyperclip.is_available():
@@ -224,7 +226,6 @@ def _ensure_clip_support(clipboard):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("text", type=str, nargs='?',
                         action="store", default=None, help="Text for translation")
@@ -256,7 +257,7 @@ def main():
     parser.add_argument("-p", '--clip', action="store_true",
                         help="Put translation into clipboard")
     parser.add_argument("-x", '--clipboard', action="store", default="xclip",
-                        help="Clipboard utility")                    
+                        help="Clipboard utility")
     args = parser.parse_args()
 
     _ensure_clip_support(args.clipboard)

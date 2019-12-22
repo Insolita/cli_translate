@@ -1,6 +1,8 @@
 Console Translator
 ==================
 
+[![PyPI version fury.io](https://badge.fury.io/py/cli_translate.svg)](https://pypi.python.org/pypi/cli_translate/)
+
 ### Installation
 
 `pip3 install cli_translate --user`
@@ -29,25 +31,25 @@ The usage yandex translator require following steps
 
  ### Usage Examples
 
-  - `itranslate -to es`  Clipboard text will be translated
+  - `itrans -to es`  Clipboard text will be translated
 
-  - `itranslate -to fr "Some text"`  "Some text" will be translated
+  - `itrans -to fr "Some text"`  "Some text" will be translated
 
-  - `itranslate -to en -i` Interactive text input mode
+  - `itrans -to en -i` Interactive text input mode
 
-  - `itranslate -to en -p` Clipboard text will be translated and replaced with translation
+  - `itrans -to en -p` Clipboard text will be translated and replaced with translation
 
-  - `itranslate --help`  See All available options
+  - `itrans --help`  See All available options
 
 
  ### Tips and Tricks
-  - register bash/zsh aliases with most useful options; example `alias et="itranslate -to en -p -o -c yandex"
+  - register bash/zsh aliases with most useful options; example `alias et="itrans -to en -p -o -c yandex"
 
-  - save translation to file `itranslate [options] > file.txt`
+  - save translation to file `itrans [options] > file.txt`
 
-  - translate text from file `itranslate [options] "$(cat /path/to_file.txt)"`
+  - translate text from file `itrans [options] "$(cat /path/to_file.txt)"`
 
-  - pipe result to another `itranslate --raw "Hello World"|cowsay`
+  - pipe result to another `itrans --raw "Hello World"|cowsay`
 
 ### Limitations
 
